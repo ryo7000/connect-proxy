@@ -1,28 +1,44 @@
 import * as http from "node:http";
+import { Message, PartialMessage } from "@bufbuild/protobuf";
 import { connectNodeAdapter, createConnectTransport } from "@connectrpc/connect-node";
-import { ConnectRouter, HandlerContext, createPromiseClient } from "@connectrpc/connect";
+import { ConnectRouter, createPromiseClient, CallOptions } from "@connectrpc/connect";
 import { ElizaService } from "./gen/proto/eliza_connect";
-import {
-  SayRequest,
-  IntroduceRequest,
-} from "./gen/proto/eliza_pb";
+
+type UnaryFn<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => Promise<O>;
+type ServerStreamFn<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>;
+
+const createUnaryProxy = <
+  I extends Message<I>,
+  O extends Message<O>
+>(client: UnaryFn<I, O>) => {
+  return async (req: PartialMessage<I>) => {
+    console.log("proxy unary req");
+    return await client(req);
+  };
+};
+
+const createStreamProxy = <
+  I extends Message<I>,
+  O extends Message<O>
+>(client: ServerStreamFn<I, O>) => {
+  return async function* (req: PartialMessage<I>) {
+    console.log("proxy server stream req");
+    for await (const res of client(req)) {
+      yield res;
+    }
+  };
+};
 
 const routes = (router: ConnectRouter) => {
   const transport = createConnectTransport({
     httpVersion: "1.1",
-    baseUrl: 'http://localhost:50052',
+    baseUrl: "http://localhost:50052",
   });
   const client = createPromiseClient(ElizaService, transport);
 
   return router.service(ElizaService, {
-    async say(req: SayRequest, context: HandlerContext) {
-      return await client.say(req);
-    },
-    async *introduce(req: IntroduceRequest, context: HandlerContext) {
-      for await (const res of client.introduce(req)) {
-        yield res;
-      }
-    },
+    say: createUnaryProxy(client.say),
+    introduce: createStreamProxy(client.introduce),
   });
 };
 
