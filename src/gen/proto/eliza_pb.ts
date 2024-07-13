@@ -31,6 +31,11 @@ export class SayRequest extends Message<SayRequest> {
    */
   sentence = "";
 
+  /**
+   * @generated from field: string host = 2;
+   */
+  host = "";
+
   constructor(data?: PartialMessage<SayRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -40,6 +45,7 @@ export class SayRequest extends Message<SayRequest> {
   static readonly typeName = "connectrpc.eliza.v1.SayRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SayRequest {
@@ -110,6 +116,11 @@ export class ConverseRequest extends Message<ConverseRequest> {
    */
   sentence = "";
 
+  /**
+   * @generated from field: string host = 2;
+   */
+  host = "";
+
   constructor(data?: PartialMessage<ConverseRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -119,6 +130,7 @@ export class ConverseRequest extends Message<ConverseRequest> {
   static readonly typeName = "connectrpc.eliza.v1.ConverseRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConverseRequest {
@@ -189,6 +201,11 @@ export class IntroduceRequest extends Message<IntroduceRequest> {
    */
   name = "";
 
+  /**
+   * @generated from field: string host = 2;
+   */
+  host = "";
+
   constructor(data?: PartialMessage<IntroduceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -198,6 +215,7 @@ export class IntroduceRequest extends Message<IntroduceRequest> {
   static readonly typeName = "connectrpc.eliza.v1.IntroduceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IntroduceRequest {

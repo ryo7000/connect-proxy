@@ -39,6 +39,7 @@ service ElizaService {
 // SayRequest is a single-sentence request.
 message SayRequest {
   string sentence = 1;
+  string host = 2;
 }
 
 // SayResponse is a single-sentence response.
@@ -50,6 +51,7 @@ message SayResponse {
 // back-and-forth conversation.
 message ConverseRequest {
   string sentence = 1;
+  string host = 2;
 }
 
 // ConverseResponse is a single sentence response sent in answer to a
@@ -61,6 +63,7 @@ message ConverseResponse {
 // IntroduceRequest asks Eliza to introduce itself to the named user.
 message IntroduceRequest {
   string name = 1;
+  string host = 2;
 }
 
 // IntroduceResponse is one sentence of Eliza's introductory monologue.
