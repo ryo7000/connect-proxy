@@ -1,44 +1,71 @@
 import * as http from "node:http";
-import { Message, PartialMessage } from "@bufbuild/protobuf";
+import { Message, PartialMessage, ServiceType } from "@bufbuild/protobuf";
 import { connectNodeAdapter, createConnectTransport } from "@connectrpc/connect-node";
-import { ConnectRouter, createPromiseClient, CallOptions } from "@connectrpc/connect";
+import { ConnectRouter, createPromiseClient, CallOptions, Transport, HandlerContext } from "@connectrpc/connect";
 import { ElizaService } from "./gen/proto/eliza_connect";
 
-type UnaryFn<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => Promise<O>;
-type ServerStreamFn<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>;
+type UnaryClient<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => Promise<O | PartialMessage<O>>;
+type ServerStreamClient<I extends Message<I>, O extends Message<O>> = (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>;
+
+type RpcName<T extends ServiceType> = keyof T['methods'];
+type UnaryImpl<I extends Message<I>, O extends Message<O>> = (request: I, context: HandlerContext) => Promise<O | PartialMessage<O>>;
+type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (request: I, context: HandlerContext) => AsyncIterable<O | PartialMessage<O>>;
+
+const transports: Record<string, Transport> = {};
 
 const createUnaryProxy = <
-  I extends Message<I>,
+  T extends ServiceType,
+  I extends Message<I> & { host: string },
   O extends Message<O>
->(client: UnaryFn<I, O>) => {
-  return async (req: PartialMessage<I>) => {
+>(service: T, name: RpcName<T>): UnaryImpl<I, O> => {
+  return async (req: I) => {
+    const host = req.host;
+
+    if (!(host in transports)) {
+      transports[host] = createConnectTransport({
+        httpVersion: "1.1",
+        baseUrl: `http://${host}`,
+      });
+    }
+
+    const transport = transports[host];
+    const client = createPromiseClient(service, transport);
+
     console.log("proxy unary req");
-    return await client(req);
+    return await (client[name] as UnaryClient<I, O>)(req as PartialMessage<I>);
   };
 };
 
 const createStreamProxy = <
-  I extends Message<I>,
+  T extends ServiceType,
+  I extends Message<I> & { host: string },
   O extends Message<O>
->(client: ServerStreamFn<I, O>) => {
-  return async function* (req: PartialMessage<I>) {
+>(service: T, name: RpcName<T>): ServerStreamingImpl<I, O> => {
+  return async function* (req: I) {
+    const host = req.host;
+
+    if (!(host in transports)) {
+      transports[host] = createConnectTransport({
+        httpVersion: "1.1",
+        baseUrl: `http://${host}`,
+      });
+    }
+
+    const transport = transports[host];
+    const client = createPromiseClient(service, transport);
+    const fn = client[name] as ServerStreamClient<I, O>;
+
     console.log("proxy server stream req");
-    for await (const res of client(req)) {
+    for await (const res of fn(req as PartialMessage<I>)) {
       yield res;
     }
   };
 };
 
 const routes = (router: ConnectRouter) => {
-  const transport = createConnectTransport({
-    httpVersion: "1.1",
-    baseUrl: "http://localhost:50052",
-  });
-  const client = createPromiseClient(ElizaService, transport);
-
   return router.service(ElizaService, {
-    say: createUnaryProxy(client.say),
-    introduce: createStreamProxy(client.introduce),
+    say: createUnaryProxy(ElizaService, "say"),
+    introduce: createStreamProxy(ElizaService, "introduce"),
   });
 };
 

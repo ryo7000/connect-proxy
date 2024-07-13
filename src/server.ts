@@ -26,4 +26,7 @@ const routes = (router: ConnectRouter) =>
     },
   });
 
-http.createServer(connectNodeAdapter({ routes })).listen(50052);
+const port = Number(process.argv[2]);
+console.log(`server starts with ${port}`);
+
+http.createServer(connectNodeAdapter({ routes })).listen(port);
