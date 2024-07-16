@@ -68,6 +68,8 @@ const createStreamProxy = <
     } catch (e) {
       const err = ConnectError.from(e);
       console.error(err);
+      // client にエラーを伝えるために必要
+      throw e
     }
   };
 };

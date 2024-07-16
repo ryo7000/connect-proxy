@@ -22,17 +22,18 @@ const routes = (router: ConnectRouter) =>
       });
     },
     async *introduce(req: IntroduceRequest, context: HandlerContext) {
-      try {
-        while (!context.signal.aborted) {
-          yield { sentence: `[${Date.now()}][${port}] Hi ${req.name}, I'm eliza` };
-          await sleep(1000);
+      let i = 0;
+      while (!context.signal.aborted) {
+        if (i > 2) {
+          throw ConnectError.from("abort by server");
         }
 
-        console.log(`request end`);
-      } catch (e) {
-        const err = ConnectError.from(e);
-        console.error(err);
+        yield { sentence: `[${Date.now()}][${port}] Hi ${req.name}, I'm eliza` };
+        await sleep(1000);
+        i++;
       }
+
+      console.log(`request end`);
     },
   });
 

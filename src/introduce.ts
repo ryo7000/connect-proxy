@@ -17,11 +17,11 @@ import { ElizaService } from "./gen/proto/eliza_connect";
   const abort = new AbortController();
   try {
     for await (const res of client.introduce({host: `localhost:${port}`, name: "foobar"}, { signal: abort.signal })) {
-      if (i > 2) {
-        console.log('abort');
-        abort.abort();
-        return;
-      }
+      // if (i > 2) {
+      //   console.log('abort');
+      //   abort.abort();
+      //   return;
+      // }
 
       console.log(res.toJsonString());
       i++;
