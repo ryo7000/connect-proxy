@@ -1,5 +1,5 @@
 import { createConnectTransport } from "@connectrpc/connect-node";
-import { createPromiseClient } from "@connectrpc/connect";
+import { ConnectError, createPromiseClient } from "@connectrpc/connect";
 import { ElizaService } from "./gen/proto/eliza_connect";
 
 (async () => {
@@ -11,7 +11,23 @@ import { ElizaService } from "./gen/proto/eliza_connect";
   const client = createPromiseClient(ElizaService, transport);
 
   const port = Number(process.argv[2]);
-  for await (const res of client.introduce({host: `localhost:${port}`, name: "foobar"})) {
-    console.log(res.toJsonString());
+
+  let i = 0;
+
+  const abort = new AbortController();
+  try {
+    for await (const res of client.introduce({host: `localhost:${port}`, name: "foobar"}, { signal: abort.signal })) {
+      if (i > 2) {
+        console.log('abort');
+        abort.abort();
+        return;
+      }
+
+      console.log(res.toJsonString());
+      i++;
+    }
+  } catch (e) {
+    const err = ConnectError.from(e);
+    console.error(err);
   }
 })();

@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import { ConnectRouter, HandlerContext } from "@connectrpc/connect";
+import { ConnectError, ConnectRouter, HandlerContext } from "@connectrpc/connect";
 import { ElizaService } from "./gen/proto/eliza_connect";
 import {
   SayRequest,
@@ -22,9 +22,16 @@ const routes = (router: ConnectRouter) =>
       });
     },
     async *introduce(req: IntroduceRequest, context: HandlerContext) {
-      while (!context.signal.aborted) {
-        yield { sentence: `[${Date.now()}][${port}] Hi ${req.name}, I'm eliza` };
-        await sleep(1000);
+      try {
+        while (!context.signal.aborted) {
+          yield { sentence: `[${Date.now()}][${port}] Hi ${req.name}, I'm eliza` };
+          await sleep(1000);
+        }
+
+        console.log(`request end`);
+      } catch (e) {
+        const err = ConnectError.from(e);
+        console.error(err);
       }
     },
   });
