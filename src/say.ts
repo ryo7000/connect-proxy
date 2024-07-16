@@ -9,6 +9,7 @@ import { ElizaService } from "./gen/proto/eliza_connect";
   });
   const client = createPromiseClient(ElizaService, transport);
 
-  const res = await client.say({sentence: "foobar"});
+  const port = Number(process.argv[2]);
+  const res = await client.say({host: `localhost:${port}`, sentence: "foobar"});
   console.log(res.toJsonString());
 })();
